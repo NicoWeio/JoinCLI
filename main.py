@@ -3,11 +3,15 @@ import urllib.parse
 import urllib.request
 import json
 import sys
-#TODO grmbl…
+import os
+# TODO grmbl…
 import requests
 PUSH_ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush'
 LIST_DEVICES_ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/registration/v1/listDevices'
-FILE_UPLOAD_ENDPOINT = 'https://transfer.sh'
+# FILE_UPLOAD_ENDPOINT = 'https://transfer.sh'
+# FILE_UPLOAD_ENDPOINT = 'https://file.io'
+FILE_UPLOAD_ENDPOINT = 'https://0x0.st/'
+# FILE_UPLOAD_ENDPOINT = 'http://httpbin.org/post'
 
 
 def doRequest(args):
@@ -110,6 +114,14 @@ elif args.list_devices:
 elif args.command == 'push':
     doRequest(args)
 elif args.command == 'push-local-file':
+    filename = os.path.basename(args.path)
     with open(args.path, 'rb') as f:
-        r = requests.post(FILE_UPLOAD_ENDPOINT + '/todo.txt', files={args.path: f})
+        # r = requests.post(FILE_UPLOAD_ENDPOINT, files={'test.txt': f})
+        # r = requests.post(FILE_UPLOAD_ENDPOINT, data={"media": "@test.txt"})
+
+        # files = {'media': open('test.txt', 'rb')}
+        # r = requests.post(FILE_UPLOAD_ENDPOINT, files)
+
+        r = requests.post(FILE_UPLOAD_ENDPOINT, files=dict(file = open(filename, 'rb')))
+
         print(r.text)
