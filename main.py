@@ -1,17 +1,30 @@
 import argparse
 import urllib.parse
 import urllib.request
+import json
+import sys
 APIKEY = '***REMOVED***'
 ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush'
 
 
-def doRequest(devNames, text):
-    params = {'apikey': APIKEY, 'deviceNames': devNames, 'text': text}
+def doRequest(args):
+    print(args)
+    #TODO 'callnumber':args.callnumber
+    params = {'apikey': APIKEY, 'deviceNames': args.device_names, 'text': args.text, 'url':args.url}
+    # print(params)
 
     url = makeRequestUrl(params)
     print(url)
     f = urllib.request.urlopen(url)
-    print(f.read().decode('utf-8'))
+    response = json.load(f)
+    print(response)
+    if (response['success']):
+        print("Success!")
+    else:
+        print("Failure!")
+        print(response)
+
+
 
 
 def makeRequestUrl(params):
@@ -32,11 +45,13 @@ parser = argparse.ArgumentParser(description='Process some integers.')
 #                     const=sum, help='sum the integers (default: find the max)')
 # parser.add_argument('--title', dest='accumulate', action='store_const',
 #                     const=title, help='sets the title')
-parser.add_argument("-n", "--dev-names", help="device names, separated by comma")
+parser.add_argument("-n", "--device-names", help="device names, separated by comma")
+parser.add_argument("--callnumber", help="sets the callnumber")
 parser.add_argument("--text", help="sets the text")
 parser.add_argument("--title", help="sets the title")
+parser.add_argument("--url", help="sets the url")
 
 args = parser.parse_args()
 
 # makeRequestUrl()
-doRequest(devNames=args.dev_names, text=args.text)
+doRequest(args)
