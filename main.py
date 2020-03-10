@@ -3,8 +3,11 @@ import urllib.parse
 import urllib.request
 import json
 import sys
+#TODO grmbl…
+import requests
 PUSH_ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush'
 LIST_DEVICES_ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/registration/v1/listDevices'
+FILE_UPLOAD_ENDPOINT = 'https://transfer.sh'
 
 
 def doRequest(args):
@@ -80,13 +83,17 @@ setup_p.add_argument("--update-devices", action="store_true")
 # parser.add_argument('--setup', action='store_true')
 parser.add_argument('--list-devices', action='store_true')
 
-parser.add_argument("-n", "--device-names", dest="deviceNames",
+push_p = subparsers.add_parser('push')
+push_p.add_argument("-n", "--device-names", dest="deviceNames",
                     nargs='*', help="device names, separated by comma")
-parser.add_argument("--callnumber", help="sets the callnumber")
-parser.add_argument("--clipboard", help="sets the clipboard")
-parser.add_argument("--text", help="sets the text")
-parser.add_argument("--title", help="sets the title")
-parser.add_argument("--url", help="sets the url")
+push_p.add_argument("--callnumber", help="sets the callnumber")
+push_p.add_argument("--clipboard", help="sets the clipboard")
+push_p.add_argument("-t", "--text", help="sets the text")
+push_p.add_argument("--title", help="sets the title")
+push_p.add_argument("--url", help="sets the url")
+
+push_local_file = subparsers.add_parser('push-local-file')
+push_local_file.add_argument("path")
 
 args = parser.parse_args()
 
@@ -100,5 +107,9 @@ elif args.list_devices:
     devs = getDevices()
     for dev in devs:
         print(dev['deviceName'])
-else:
+elif args.command == 'push':
     doRequest(args)
+elif args.command == 'push-local-file':
+    with open(args.path, 'rb') as f:
+        r = requests.post(FILE_UPLOAD_ENDPOINT + '/todo.txt', files={args.path: f})
+        print(r.text)
