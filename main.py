@@ -68,7 +68,6 @@ def updateConfig(key, value):
     config[key] = value
     setConfig(config)
 
-
 def setup():
     print("--> Open this link: https://joinjoaomgcd.appspot.com/")
     print("--> Select \"Join API\"")
@@ -76,6 +75,13 @@ def setup():
     print("--> Copy that key…")
     apikey = input("--> …and paste it here: ")
     setConfig({'apikey': apikey})
+
+def uploadFile(path):
+    filename = os.path.basename(path)
+    with open(path, 'rb') as f:
+        r = requests.post(FILE_UPLOAD_ENDPOINT, files=dict(file = open(path, 'rb')))
+        print("Upload complete! URL: " + r.text)
+        return r.text
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -95,6 +101,7 @@ push_p.add_argument("--clipboard", help="sets the clipboard")
 push_p.add_argument("-t", "--text", help="sets the text")
 push_p.add_argument("--title", help="sets the title")
 push_p.add_argument("--url", help="sets the url")
+push_p.add_argument("--local-file", help="uploads the file to a server and pushes the URL")
 
 push_local_file = subparsers.add_parser('push-local-file')
 push_local_file.add_argument("path")
@@ -112,16 +119,8 @@ elif args.list_devices:
     for dev in devs:
         print(dev['deviceName'])
 elif args.command == 'push':
+    if args.local_file:
+        url = uploadFile(args.local_file)
+        args.file = url
+
     doRequest(args)
-elif args.command == 'push-local-file':
-    filename = os.path.basename(args.path)
-    with open(args.path, 'rb') as f:
-        # r = requests.post(FILE_UPLOAD_ENDPOINT, files={'test.txt': f})
-        # r = requests.post(FILE_UPLOAD_ENDPOINT, data={"media": "@test.txt"})
-
-        # files = {'media': open('test.txt', 'rb')}
-        # r = requests.post(FILE_UPLOAD_ENDPOINT, files)
-
-        r = requests.post(FILE_UPLOAD_ENDPOINT, files=dict(file = open(filename, 'rb')))
-
-        print(r.text)
