@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import argparse
+import argcomplete, argparse
 import urllib.parse
 import urllib.request
 import json
@@ -150,6 +150,7 @@ push_p.add_argument("-u", "--url", help="sets the url")
 push_p.add_argument("-f", "--local-file",
                     help="uploads the file to a server and pushes the URL")
 
+argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
 if args.command == 'setup':
