@@ -14,6 +14,17 @@ FILE_UPLOAD_ENDPOINT = 'https://0x0.st/'
 # FILE_UPLOAD_ENDPOINT = 'http://httpbin.org/post'
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 def doRequest(args):
     filteredParams = {k: v for k, v in vars(args).items() if v is not None}
     if 'deviceNames' in filteredParams:
@@ -21,7 +32,7 @@ def doRequest(args):
     filteredParams['apikey'] = getConfig()['apikey']
     result = doActualRequest(PUSH_ENDPOINT, filteredParams)
     if result:
-        print("Pushed successfully!")
+        print(f"{bcolors.OKGREEN}Pushed successfully!{bcolors.ENDC}")
         sys.exit(0)
 
 
@@ -34,10 +45,18 @@ def doActualRequest(endpoint, params):
         return response
     else:
         errorMessage = response['errorMessage']
-        print('Error: ' + errorMessage)
+        print(f"{bcolors.FAIL}Error: " + errorMessage + bcolors.ENDC)
         if errorMessage == 'User Not Authenticated':
-            print("--> You should update your API key by running join-cli --setup")
+            print("--> You should update your API key by running join-cli setup")
         sys.exit(1)
+
+
+def testApiKey(key):
+    url = makeRequestUrl(LIST_DEVICES_ENDPOINT, {
+        'apikey': key})
+    req = urllib.request.urlopen(url)
+    response = json.load(req)
+    return ('success' in response) and response['success']
 
 
 def makeRequestUrl(endpoint, params):
@@ -69,7 +88,7 @@ def updateConfig(key, value):
     config = getConfig()
     config[key] = value
     setConfig(config)
-    print("Updated " + key + " in config")
+    print(f"{bcolors.OKBLUE}Updated " + key + f" in config{bcolors.ENDC}")
 
 
 def setup():
@@ -79,7 +98,11 @@ def setup():
     print("--> Copy that key…")
     apikey = input("--> …and paste it here (leave empty to abort): ")
     if apikey:
-        setConfig({'apikey': apikey})
+        if testApiKey(apikey):
+            updateConfig('apikey', apikey)
+        else:
+            print(
+                f"{bcolors.FAIL}That did not work. The key you entered appears to be invalid.{bcolors.ENDC}")
     else:
         print("Aborted.")
 
@@ -90,8 +113,10 @@ def uploadFile(path):
     with open(path, 'rb') as f:
         r = requests.post(FILE_UPLOAD_ENDPOINT,
                           files=dict(file=open(path, 'rb')))
-        print("Upload complete! URL: " + r.text)
-        return r.text
+        fileurl = r.text.strip('\n')
+        print(f"{bcolors.OKBLUE}Upload complete! URL: " +
+              fileurl + bcolors.ENDC)
+        return r.text.strip('\n')
 
 
 parser = argparse.ArgumentParser(
@@ -125,8 +150,8 @@ if args.command == 'setup':
         devices = getDevices()
         i = 1
         for dev in devices:
-            print("["+str(i)+"] " + dev['deviceName'])
-            i+=1
+            print("[" + str(i) + "] " + dev['deviceName'])
+            i += 1
         devList = input("Choose one or multiple devices, separated by comma: ")
         devIntList = list(map(lambda d: int(d), devList.split(',')))
 
@@ -135,7 +160,7 @@ if args.command == 'setup':
         for dev in devices:
             if i in devIntList:
                 resultingDevices.append(dev)
-            i+=1
+            i += 1
         deviceNameList = list(map(lambda d: d['deviceName'], resultingDevices))
         if not deviceNameList:
             print("No device selected. Aborting.")
