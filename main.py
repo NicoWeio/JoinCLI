@@ -6,6 +6,7 @@ import urllib.request
 import json
 import sys
 import os
+from pathlib import Path
 PUSH_ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush'
 LIST_DEVICES_ENDPOINT = 'https://joinjoaomgcd.appspot.com/_ah/api/registration/v1/listDevices'
 # FILE_UPLOAD_ENDPOINT = 'https://transfer.sh'
@@ -73,21 +74,30 @@ def getDevices():
     return r['records']
 
 
+def getConfigPath():
+    home = str(Path.home())
+    return os.path.join(home, '.join-cli-config.json')
+
+
 def getConfig():
-    with open('join-cli-config.json', 'r') as f:
+    with open(getConfigPath(), 'r') as f:
         config = json.load(f)
         return config
 
 
 def setConfig(config):
-    with open('join-cli-config.json', 'w', encoding='utf-8') as f:
+    with open(getConfigPath(), 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False, indent=4)
 
 
 def updateConfig(key, value):
-    config = getConfig()
-    config[key] = value
-    setConfig(config)
+    try:
+        config = getConfig()
+        config[key] = value
+        setConfig(config)
+    except FileNotFoundError as e:
+        print(f"{bcolors.OKBLUE}Config file not found. It will be created here: {getConfigPath()}{bcolors.ENDC}")
+        setConfig({key: value})
     print(f"{bcolors.OKBLUE}Updated " + key + f" in config{bcolors.ENDC}")
 
 
@@ -114,8 +124,8 @@ def uploadFile(path):
         r = requests.post(FILE_UPLOAD_ENDPOINT,
                           files=dict(file=open(path, 'rb')))
         fileurl = r.text.strip('\n')
-        print(f"{bcolors.OKBLUE}Upload complete! URL: " +
-              fileurl + bcolors.ENDC)
+        print(f"{bcolors.OKBLUE}Upload complete! URL: "
+              + fileurl + bcolors.ENDC)
         return r.text.strip('\n')
 
 
