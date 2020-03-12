@@ -1,8 +1,8 @@
 #!/usr/bin/python3
+# PYTHON_ARGCOMPLETE_OK
 
 import argcomplete, argparse
-import urllib.parse
-import urllib.request
+import requests
 import json
 import sys
 import os
@@ -26,7 +26,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def doRequest(args):
+def push(args):
     filteredParams = {k: v for k, v in vars(args).items() if v is not None}
     if 'deviceNames' in filteredParams:
         filteredParams['deviceNames'] = ','.join(filteredParams['deviceNames'])
@@ -38,10 +38,8 @@ def doRequest(args):
 
 
 def doActualRequest(endpoint, params):
-    url = makeRequestUrl(endpoint, params)
-    # print(url)
-    req = urllib.request.urlopen(url)
-    response = json.load(req)
+    r = requests.get(endpoint, params)
+    response = r.json()
     if (response['success']):
         return response
     else:
@@ -53,20 +51,9 @@ def doActualRequest(endpoint, params):
 
 
 def testApiKey(key):
-    url = makeRequestUrl(LIST_DEVICES_ENDPOINT, {
-        'apikey': key})
-    req = urllib.request.urlopen(url)
-    response = json.load(req)
+    r = requests.get(LIST_DEVICES_ENDPOINT, params={'apikey': key})
+    response = r.json()
     return ('success' in response) and response['success']
-
-
-def makeRequestUrl(endpoint, params):
-    url_parts = list(urllib.parse.urlparse(endpoint))
-    query = dict(urllib.parse.parse_qsl(url_parts[4]))
-    query.update(params)
-    url_parts[4] = urllib.parse.urlencode(query)
-    return urllib.parse.urlunparse(url_parts)
-
 
 def getDevices():
     r = doActualRequest(LIST_DEVICES_ENDPOINT, {
@@ -109,6 +96,7 @@ def setup():
     apikey = input("--> …and paste it here (leave empty to abort): ")
     if apikey:
         if testApiKey(apikey):
+            print(f"{bcolors.OKGREEN}Check of apikey successful{bcolors.ENDC}")
             updateConfig('apikey', apikey)
         else:
             print(
@@ -118,7 +106,6 @@ def setup():
 
 
 def uploadFile(path):
-    import requests  # TODO grmbl…
     filename = os.path.basename(path)
     with open(path, 'rb') as f:
         r = requests.post(FILE_UPLOAD_ENDPOINT,
@@ -188,6 +175,6 @@ elif args.command == 'push':
         url = uploadFile(args.local_file)
         args.file = url
 
-    doRequest(args)
+    push(args)
 else:
     parser.print_help()
